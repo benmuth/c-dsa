@@ -14,6 +14,7 @@ struct Node {
 struct Node *create_list(int num_elements) {
     struct Node *tmp = (struct Node *)malloc(sizeof(struct Node));
     tmp->val = rand();
+    printf("first new node val: %d\n", tmp->val);
     struct Node *head = tmp;
     for (int i = 0; i < num_elements; i++) {
         struct Node *next = (struct Node *)malloc(sizeof(struct Node));
