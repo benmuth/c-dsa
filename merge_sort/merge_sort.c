@@ -1,58 +1,127 @@
+#include <assert.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-int NUM_ELEMENTS = 10;
+int NUM_ELEMENTS = 100000;
 
 struct Node {
-    char val;
+    int val;
     struct Node *next;
 };
 
-// create an array num_elements long filled with random integers
-struct Node *create_list(int num_elements) {
-    struct Node *tmp = (struct Node *)malloc(sizeof(struct Node));
-    tmp->val = rand();
-    printf("first new node val: %d\n", tmp->val);
-    struct Node *head = tmp;
-    for (int i = 0; i < num_elements; i++) {
-        struct Node *next = (struct Node *)malloc(sizeof(struct Node));
-        next->val = rand();
-        printf("new node val: %d\n", next->val);
-        printf("new node address: %p\n", &next);
-        tmp->next = next;
-    }
+struct Node *create_node(int val) {
+    struct Node *node = malloc(sizeof(struct Node));
+    node->val = val;
+    return node;
+}
 
+// create an array num_elements long filled with random integers
+struct Node *create_list(int len) {
+    struct Node *head = create_node(rand());
+    struct Node *tmp = head;
+    for (int i = 0; i < len; i++) {
+        printf("new node val: %d\n", tmp->val);
+        struct Node *next = create_node(rand());
+        tmp->next = next;
+        tmp = next;
+    }
     return head;
 }
 
-void iterate_through_list(struct Node *head) {
-    printf("ITERATING\n");
+void print_list(struct Node *head) {
+    printf("PRINTING\n");
     int i = 0;
     while (head->next) {
-        printf("node value: %d\n", head->val);
-        printf("next address %p\n", head->next);
         head = head->next;
         i++;
     }
     printf("list is %d elements long\n", i);
 }
 
+struct Node *find_mid(struct Node *head) {
+    struct Node *slow = head;
+    struct Node *fast = head;
+
+    while (fast->next && fast->next->next) {
+        slow = slow->next;
+        fast = fast->next->next;
+    }
+    return slow;
+}
+
+struct Node *merge_lists(struct Node *list1, struct Node *list2) {
+    if (!list1) {
+        return list2;
+    }
+    if (!list2) {
+        return list1;
+    }
+
+    if (list1->val <= list2->val) {
+        list1->next = merge_lists(list1->next, list2);
+        return list1;
+    } else {
+        list2->next = merge_lists(list1, list2->next);
+        return list2;
+    }
+}
+
+struct Node *sort_list(struct Node *head) {
+    if (!head || !(head->next)) {
+        return head;
+    }
+
+    struct Node *mid = find_mid(head);
+    struct Node *right = mid->next;
+    mid->next = NULL;
+    struct Node *left = head;
+
+    left = sort_list(left);
+    right = sort_list(right);
+
+    return merge_lists(left, right);
+}
+
+void validate_sort(struct Node *head) {
+    int prev_val = head->val;
+    while (head->next) {
+        head = head->next;
+        int val = head->val;
+        assert(val >= prev_val);
+        prev_val = val;
+    }
+    printf("VALIDATED\n");
+}
+
+void free_list(struct Node *head) {
+    while (head->next) {
+        struct Node *next = head->next;
+        free(head);
+        head = next;
+    }
+}
+
 int main(void) {
-    // use time as seed for random list node values
-    struct timespec ts;
-    timespec_get(&ts, TIME_UTC);
-    srand(ts.tv_sec);
+    srand(time(NULL));
 
-    // struct list_node tmp = {.val = rand()};
-    // struct list_node tmp2 = {.val = rand(), .next = &tmp};
-
-    // printf("%d\n", tmp2.next == NULL);
-
+    printf("CREATING\n");
     struct Node *head = create_list(NUM_ELEMENTS);
-    // iterate_through_list(head);
-    printf("first element value: %d\n", head->val);
+
+    printf("SORTING\n");
+    clock_t start = clock(), diff;
+    printf("start: %lu\n", start);
+    head = sort_list(head);
+    diff = clock() - start;
+    printf("diff: %lu\n", diff);
+    printf("clocks/sec: %lu\n", CLOCKS_PER_SEC);
+    int msec = diff * 1000 / CLOCKS_PER_SEC;
+    printf("merge sort for %d elements: %ds %dms\n", NUM_ELEMENTS, msec / 1000,
+           msec % 1000);
+    validate_sort(head);
+
+    free_list(head);
     return 0;
 }
 
