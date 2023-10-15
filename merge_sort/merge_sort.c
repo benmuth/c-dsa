@@ -110,32 +110,35 @@ struct Node *sort_list(struct Node *head) {
     return merge_lists_iter(left, right);
 }
 
-// bool has_cycle(struct Node *head) {
-//     printf("in detect cycle");
-//     struct Node *slow = head;
-//     struct Node *fast = head;
+bool has_cycle(struct Node *head) {
+    if (!head) {
+        return false;
+    }
+    struct Node *slow = head;
+    struct Node *fast = head;
 
-//     while (fast->next) {
-//         printf("inc slow");
-//         slow = slow->next;
-//         printf("inc fast");
-//         fast = fast->next;
-//         printf("checking if end");
-//         if (!fast) {
-//             return false;
-//         }
-//         printf("inc fast");
-//         fast = fast->next;
-//         printf("checking if cycle");
-//         if (slow == fast) {
-//             return true;
-//         }
-//     }
+    while (fast) {
+        slow = slow->next;
+        fast = fast->next;
+        if (!fast) {
+            return false;
+        }
+        fast = fast->next;
+        if (slow == fast) {
+            return true;
+        }
+    }
 
-//     return false;
-// }
+    return false;
+}
 
 bool is_valid_sort(struct Node *head) {
+    if (has_cycle(head)) {
+        printf("has cycle\n");
+        return false;
+        // return false;
+    }
+    printf("no cycle\n");
     int prev_val = head->val;
     while (head->next) {
         head = head->next;
@@ -164,12 +167,6 @@ int main(void) {
     printf("CREATING\n");
     struct Node *head = create_list(NUM_ELEMENTS);
 
-    // if (has_cycle(head)) {
-    //     printf("has cycle");
-    //     // return false;
-    // } else {
-    //     printf("no cycle");
-    // }
     printf("SORTING\n");
     clock_t start = clock(), diff;
     printf("start: %lu\n", start);
