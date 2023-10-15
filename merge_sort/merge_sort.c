@@ -1,10 +1,11 @@
 #include <assert.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
-int NUM_ELEMENTS = 100000;
+long NUM_ELEMENTS = 100000;
 
 struct Node {
     int val;
@@ -22,7 +23,6 @@ struct Node *create_list(int len) {
     struct Node *head = create_node(rand());
     struct Node *tmp = head;
     for (int i = 0; i < len; i++) {
-        printf("new node val: %d\n", tmp->val);
         struct Node *next = create_node(rand());
         tmp->next = next;
         tmp = next;
@@ -51,7 +51,7 @@ struct Node *find_mid(struct Node *head) {
     return slow;
 }
 
-struct Node *merge_lists(struct Node *list1, struct Node *list2) {
+struct Node *merge_lists_rec(struct Node *list1, struct Node *list2) {
     if (!list1) {
         return list2;
     }
@@ -60,12 +60,38 @@ struct Node *merge_lists(struct Node *list1, struct Node *list2) {
     }
 
     if (list1->val <= list2->val) {
-        list1->next = merge_lists(list1->next, list2);
+        list1->next = merge_lists_rec(list1->next, list2);
         return list1;
     } else {
-        list2->next = merge_lists(list1, list2->next);
+        list2->next = merge_lists_rec(list1, list2->next);
         return list2;
     }
+}
+
+struct Node *merge_lists_iter(struct Node *list1, struct Node *list2) {
+    struct Node head;
+    struct Node *tmp = &head;
+    head.next = NULL;
+    while (1) {
+        if (!list1) {
+            tmp->next = list2;
+            break;
+        }
+        if (!list2) {
+            tmp->next = list1;
+            break;
+        }
+
+        if (list1->val <= list2->val) {
+            tmp->next = list1;
+            list1 = list1->next;
+        } else {
+            tmp->next = list2;
+            list2 = list2->next;
+        }
+        tmp = tmp->next;
+    }
+    return head.next;
 }
 
 struct Node *sort_list(struct Node *head) {
@@ -81,18 +107,47 @@ struct Node *sort_list(struct Node *head) {
     left = sort_list(left);
     right = sort_list(right);
 
-    return merge_lists(left, right);
+    return merge_lists_iter(left, right);
 }
 
-void validate_sort(struct Node *head) {
+// bool has_cycle(struct Node *head) {
+//     printf("in detect cycle");
+//     struct Node *slow = head;
+//     struct Node *fast = head;
+
+//     while (fast->next) {
+//         printf("inc slow");
+//         slow = slow->next;
+//         printf("inc fast");
+//         fast = fast->next;
+//         printf("checking if end");
+//         if (!fast) {
+//             return false;
+//         }
+//         printf("inc fast");
+//         fast = fast->next;
+//         printf("checking if cycle");
+//         if (slow == fast) {
+//             return true;
+//         }
+//     }
+
+//     return false;
+// }
+
+bool is_valid_sort(struct Node *head) {
     int prev_val = head->val;
     while (head->next) {
         head = head->next;
         int val = head->val;
         assert(val >= prev_val);
+        if (val < prev_val) {
+            return false;
+        }
         prev_val = val;
     }
     printf("VALIDATED\n");
+    return true;
 }
 
 void free_list(struct Node *head) {
@@ -109,6 +164,12 @@ int main(void) {
     printf("CREATING\n");
     struct Node *head = create_list(NUM_ELEMENTS);
 
+    // if (has_cycle(head)) {
+    //     printf("has cycle");
+    //     // return false;
+    // } else {
+    //     printf("no cycle");
+    // }
     printf("SORTING\n");
     clock_t start = clock(), diff;
     printf("start: %lu\n", start);
@@ -117,9 +178,10 @@ int main(void) {
     printf("diff: %lu\n", diff);
     printf("clocks/sec: %lu\n", CLOCKS_PER_SEC);
     int msec = diff * 1000 / CLOCKS_PER_SEC;
-    printf("merge sort for %d elements: %ds %dms\n", NUM_ELEMENTS, msec / 1000,
+    printf("merge sort for %lu elements: %ds %dms\n", NUM_ELEMENTS, msec / 1000,
            msec % 1000);
-    validate_sort(head);
+    printf("VALIDATING\n");
+    is_valid_sort(head);
 
     free_list(head);
     return 0;
