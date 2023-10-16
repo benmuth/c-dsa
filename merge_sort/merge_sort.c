@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-long NUM_ELEMENTS = 100000;
+long NUM_ELEMENTS = 10000000;
 
 struct Node {
     int val;
@@ -169,9 +169,11 @@ int main(void) {
 
     printf("SORTING\n");
     clock_t start = clock(), diff;
-    printf("start: %lu\n", start);
+
     head = sort_list(head);
+
     diff = clock() - start;
+    printf("start: %lu\n", start);
     printf("diff: %lu\n", diff);
     printf("clocks/sec: %lu\n", CLOCKS_PER_SEC);
     int msec = diff * 1000 / CLOCKS_PER_SEC;
